@@ -1,9 +1,13 @@
 {
-  "name": "mc-nbt",
+  "name": "nbt-ts",
   "version": "0.1.0",
   "description": "NBT decoder and encoder",
   "main": "lib",
   "types": "lib",
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/janispritzkau/mc-nbt.git"
+  },
   "scripts": {
     "prepare": "tsc"
   },
@@ -11,7 +15,8 @@
     "nbt",
     "decode",
     "encode",
-    "minecraft"
+    "minecraft",
+    "typescript"
   ],
   "author": "Janis Pritzkau <janispritzkau@gmail.com>",
   "license": "MIT",
