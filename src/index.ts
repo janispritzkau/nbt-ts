@@ -62,10 +62,18 @@ export function decodeTag(buffer: Buffer, offset: number, type: number) {
     return { value: <Tag>value, offset }
 }
 
-export function decode(buffer: Buffer, offset = 0) {
+interface DecodeResult {
+    name?: string
+    value?: Tag
+    offset: number
+}
+
+export function decode(buffer: Buffer, offset = 0): DecodeResult {
     const type = buffer.readUInt8(offset)
-    const len = buffer.readUInt16BE(offset + 1)
-    offset += 3
+    offset += 1
+    if (type == TagType.End) return { offset }
+    const len = buffer.readUInt16BE(offset)
+    offset += 2
     const name = buffer.toString("utf-8", offset, offset += len)
     return { name, ...decodeTag(buffer, offset, type) }
 }
