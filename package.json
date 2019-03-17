@@ -1,0 +1,22 @@
+{
+  "name": "mc-nbt",
+  "version": "0.1.0",
+  "description": "NBT decoder and encoder",
+  "main": "lib",
+  "types": "lib",
+  "scripts": {
+    "prepare": "tsc"
+  },
+  "keywords": [
+    "nbt",
+    "decode",
+    "encode",
+    "minecraft"
+  ],
+  "author": "Janis Pritzkau <janispritzkau@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^11.11.3",
+    "typescript": "^3.3.3333"
+  }
+}
