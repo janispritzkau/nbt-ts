@@ -9,7 +9,9 @@ export enum TagType {
     ByteArray = 7,
     String = 8,
     List = 9,
-    Compound = 10
+    Compound = 10,
+    IntArray = 11,
+    LongArray = 12
 }
 
 export class Byte { constructor(public value: number) {} }
@@ -19,9 +21,11 @@ export class Float { constructor(public value: number) {} }
 
 export interface TagArray extends Array<Tag> {}
 export interface TagObject { [key: string]: Tag }
-export type Tag = Byte | Short | Int | bigint | Float | number | string | Buffer | TagArray | TagObject
+export type Tag = number | string | bigint | Byte | Short | Int | Float
+    | Buffer | Int32Array | BigInt64Array | TagArray | TagObject
 
 export function getTagType(tag: Tag): TagType {
+    if (tag == null) return TagType.End
     if (tag instanceof Byte) return TagType.Byte
     if (tag instanceof Short) return TagType.Short
     if (tag instanceof Int) return TagType.Int
@@ -31,6 +35,8 @@ export function getTagType(tag: Tag): TagType {
     if (tag instanceof Buffer) return TagType.ByteArray
     if (typeof tag == "string") return TagType.String
     if (tag instanceof Array) return TagType.List
-    if (typeof tag == "object") return TagType.Compound
-    throw new Error("Invalid tag")
+    if (tag.constructor == Object) return TagType.Compound
+    if (tag instanceof Int32Array) return TagType.IntArray
+    if (tag instanceof BigInt64Array) return TagType.LongArray
+    throw new Error("Invalid tag value")
 }

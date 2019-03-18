@@ -9,7 +9,9 @@ const buffer = encode("root tag name", {
     longList: [1n, 2n, 3n],
     nested: {
         byteArray: Buffer.from([0x80, 0x40, 0x20])
-    }
+    },
+    intArray: new Int32Array([1, 2, 3, 4]),
+    longArray: new BigInt64Array([1n, 2n, 3n, 4n]),
 })
 
 console.log(decode(buffer))

@@ -57,6 +57,18 @@ export function decodeTag(buffer: Buffer, offset: number, type: number) {
             value = object
             break
         }
+        case TagType.IntArray: {
+            const len = buffer.readUInt32BE(offset)
+            offset += 4
+            value = new Int32Array(buffer.buffer.slice(offset, offset += len * 4))
+            break
+        }
+        case TagType.LongArray: {
+            const len = buffer.readUInt32BE(offset)
+            offset += 4
+            value = new BigInt64Array(buffer.buffer.slice(offset, offset += len * 8))
+            break
+        }
         default: throw new Error(`Tag type ${type} not implemented`)
     }
     return { value: <Tag>value, offset }
@@ -115,6 +127,16 @@ export function encodeTag(tag: Tag, buffer = Buffer.alloc(1024), offset = 0) {
         }
     } else if (typeof tag == "string") {
         ({ buffer, offset } = writeString(tag, buffer, offset))
+    } else if (tag instanceof Int32Array) {
+        offset = buffer.writeUInt32BE(tag.length, offset)
+        buffer = accommodate(buffer, offset, tag.buffer.byteLength)
+        Buffer.from(tag.buffer).copy(buffer, offset)
+        offset += tag.buffer.byteLength
+    } else if (tag instanceof BigInt64Array) {
+        offset = buffer.writeUInt32BE(tag.length, offset)
+        buffer = accommodate(buffer, offset, tag.buffer.byteLength)
+        Buffer.from(tag.buffer).copy(buffer, offset)
+        offset += tag.buffer.byteLength
     } else {
         for (const [key, value] of Object.entries(tag)) {
             offset = buffer.writeUInt8(getTagType(value), offset);
