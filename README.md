@@ -1,14 +1,12 @@
 # NBT
 
 An easy to use encoder and decoder for the [NBT format](https://wiki.vg/NBT).
-It represents NBT tags close to plain JSON objects with the exception for
-some number types that JavaScript does not support.
 
-It represents NBT tags as close as possible to plain JSON objects, with the
-exception of some number types that JavaScript does not directly support.
-Those types are wrapped in classes, e.g. `Byte`, `Float`.
+NBT compound tags are represented as plain JavaScript objects. Some types
+are wrapped in custom classes since JavaScript does not support different integer
+types directly, e.g. `Byte`, `Short`, `Int`, `Float`.
 
-Node 10.4 or higher is required for BigInts, which are used to represent Longs.
+Node 10.4 or higher is required for BigInts, which are used to represent 64 bit integers.
 
 ## Example
 
