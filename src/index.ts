@@ -60,13 +60,25 @@ export function decodeTag(buffer: Buffer, offset: number, type: number) {
         case TagType.IntArray: {
             const len = buffer.readUInt32BE(offset)
             offset += 4
-            value = new Int32Array(buffer.buffer.slice(offset, offset += len * 4))
+            const dataview = new DataView(buffer.buffer, offset)
+            const array = new Int32Array(len)
+            for (let i = 0; i < len; i++) {
+                array[i] = dataview.getInt32(i * 4, false)
+            }
+            offset += array.buffer.byteLength
+            value = array
             break
         }
         case TagType.LongArray: {
             const len = buffer.readUInt32BE(offset)
             offset += 4
-            value = new BigInt64Array(buffer.buffer.slice(offset, offset += len * 8))
+            const dataview = new DataView(buffer.buffer, offset)
+            const array = new BigInt64Array(len)
+            for (let i = 0; i < len; i++) {
+                array[i] = dataview.getBigInt64(i * 8, false)
+            }
+            offset += array.buffer.byteLength
+            value = array
             break
         }
         default: throw new Error(`Tag type ${type} not implemented`)
@@ -130,12 +142,18 @@ export function encodeTag(tag: Tag, buffer = Buffer.alloc(1024), offset = 0) {
     } else if (tag instanceof Int32Array) {
         offset = buffer.writeUInt32BE(tag.length, offset)
         buffer = accommodate(buffer, offset, tag.buffer.byteLength)
-        Buffer.from(tag.buffer).copy(buffer, offset)
+        const dataview = new DataView(buffer.buffer, offset)
+        for (let i = 0; i < tag.length; i++) {
+            dataview.setInt32(i * 4, tag[i], false)
+        }
         offset += tag.buffer.byteLength
     } else if (tag instanceof BigInt64Array) {
         offset = buffer.writeUInt32BE(tag.length, offset)
         buffer = accommodate(buffer, offset, tag.buffer.byteLength)
-        Buffer.from(tag.buffer).copy(buffer, offset)
+        const dataview = new DataView(buffer.buffer, offset)
+        for (let i = 0; i < tag.length; i++) {
+            dataview.setBigInt64(i * 8, tag[i], false)
+        }
         offset += tag.buffer.byteLength
     } else {
         for (const [key, value] of Object.entries(tag)) {
