@@ -6,7 +6,7 @@
   "types": "lib",
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/janispritzkau/mc-nbt.git"
+    "url": "git+https://gitlab.com/janispritzkau/nbt-ts.git"
   },
   "scripts": {
     "prepare": "tsc"
