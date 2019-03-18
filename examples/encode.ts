@@ -6,7 +6,7 @@ const buffer = encode("root tag name", {
     float: new Float(0.75),
     double: 0.1 + 0.2,
     text: "Hello world",
-    longList: [1n, 2n, 3n],
+    longList: ["item 1", "item 2"],
     nested: {
         byteArray: Buffer.from([0x80, 0x40, 0x20])
     },
@@ -14,4 +14,6 @@ const buffer = encode("root tag name", {
     longArray: new BigInt64Array([1n, 2n, 3n, 4n]),
 })
 
-console.log(decode(buffer))
+const { name, value } = decode(buffer)
+console.log(value)
+console.log(encode(name, value!).equals(buffer))

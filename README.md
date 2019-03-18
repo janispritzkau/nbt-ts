@@ -19,7 +19,7 @@ const buffer = encode("root tag name", {
     float: new Float(0.75),
     double: 0.1 + 0.2,
     text: "Hello world",
-    longList: [1n, 2n, 3n],
+    list: ["item 1", "item 2"],
     nested: {
         byteArray: Buffer.from([0x80, 0x40, 0x20])
     },
