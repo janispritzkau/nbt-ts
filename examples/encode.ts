@@ -17,3 +17,6 @@ const buffer = encode("root tag name", {
 const { name, value } = decode(buffer)
 console.log(value)
 console.log(encode(name, value!).equals(buffer))
+
+console.log(decode(encode("", -1n)))
+// console.log(decode(encode("", 18446744073709551615n)))
