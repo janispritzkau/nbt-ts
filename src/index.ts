@@ -1,8 +1,10 @@
 import { Tag, TagType, Byte, Float, Int, Short, getTagType, TagObject } from "./tag"
 
 function accommodate(buffer: Buffer, offset: number, size: number) {
-    if (buffer.length >= offset + size) return buffer
-    return Buffer.concat([buffer, Buffer.alloc(size)])
+    while (buffer.length < offset + size) {
+        buffer = Buffer.concat([buffer, Buffer.alloc(buffer.length)])
+    }
+    return buffer
 }
 
 
