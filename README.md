@@ -29,4 +29,14 @@ const buffer = encode("root tag name", {
 
 decode(Buffer.from("02000973686F7274546573747FFF", "hex"))
 // ⮡ { name: 'shortTest', value: Short { value: 32767 }, offset: 14 }
+
+// unnamed tag
+encode(null, "a") // ⮡ <Buffer 00 00 01 61>
+
+// decode unnamed tag
+decode(Buffer.from([0x00]), false) // ⮡ { name: null, value: null, offset: 1 }
+
+// decode at offset
+decode(Buffer.from("0000010000ff", "hex"), true, 2)
+// ⮡ { name: '', value: Byte { value: -1 }, offset: 6 }
 ```

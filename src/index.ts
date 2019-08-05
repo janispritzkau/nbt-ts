@@ -11,6 +11,7 @@ function accommodate(buffer: Buffer, offset: number, size: number) {
 export function decodeTag(buffer: Buffer, offset: number, type: number) {
     let value: Tag
     switch (type) {
+        case TagType.End: value = null; break
         case TagType.Byte: value = new Byte(buffer.readInt8((offset += 1) - 1)); break
         case TagType.Short: value = new Short(buffer.readInt16BE((offset += 2) - 2)); break
         case TagType.Int: value = new Int(buffer.readInt32BE((offset += 4) - 4)); break
@@ -89,18 +90,22 @@ export function decodeTag(buffer: Buffer, offset: number, type: number) {
 }
 
 interface DecodeResult {
-    name?: string
-    value?: Tag
+    name: string | null
+    value: Tag
     offset: number
 }
 
-export function decode(buffer: Buffer, offset = 0): DecodeResult {
+export function decode(buffer: Buffer, hasName = true, offset = 0): DecodeResult {
     const type = buffer.readUInt8(offset)
     offset += 1
-    if (type == TagType.End) return { offset }
-    const len = buffer.readUInt16BE(offset)
-    offset += 2
-    const name = buffer.toString("utf-8", offset, offset += len)
+
+    let name: string | null = null
+    if (hasName) {
+        const len = buffer.readUInt16BE(offset)
+        offset += 2
+        name = buffer.toString("utf-8", offset, offset += len)
+    }
+
     return { name, ...decodeTag(buffer, offset, type) }
 }
 
@@ -157,7 +162,7 @@ export function encodeTag(tag: Tag, buffer = Buffer.alloc(1024), offset = 0) {
             dataview.setBigInt64(i * 8, tag[i], false)
         }
         offset += tag.buffer.byteLength
-    } else {
+    } else if (tag != null) {
         for (const [key, value] of Object.entries(tag)) {
             offset = buffer.writeUInt8(getTagType(value), offset);
             ({ buffer, offset } = writeString(key, buffer, offset));
@@ -169,10 +174,10 @@ export function encodeTag(tag: Tag, buffer = Buffer.alloc(1024), offset = 0) {
     return { buffer, offset }
 }
 
-export function encode(name = "", tag: Tag) {
+export function encode(name: string | null = "", tag: Tag) {
     let buffer = Buffer.alloc(1024), offset = 0
     offset = buffer.writeUInt8(getTagType(tag), offset);
-    ({ buffer, offset } = writeString(name, buffer, offset));
+    if (name != null) ({ buffer, offset } = writeString(name, buffer, offset));
     ({ buffer, offset } = encodeTag(tag, buffer, offset))
     return buffer.slice(0, offset)
 }

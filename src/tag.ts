@@ -14,14 +14,29 @@ export enum TagType {
     LongArray = 12
 }
 
-export class Byte { constructor(public value: number) {} }
-export class Short { constructor(public value: number) {} }
-export class Int { constructor(public value: number) {} }
-export class Float { constructor(public value: number) {} }
+export class Byte {
+    constructor(public value: number) {}
+    valueOf() { return this.value }
+}
+
+export class Short {
+    constructor(public value: number) {}
+    valueOf() { return this.value }
+}
+
+export class Int {
+    constructor(public value: number) {}
+    valueOf() { return this.value }
+}
+
+export class Float {
+    constructor(public value: number) {}
+    valueOf() { return this.value }
+}
 
 export interface TagArray extends Array<Tag> {}
 export interface TagObject { [key: string]: Tag }
-export type Tag = number | string | bigint | Byte | Short | Int | Float
+export type Tag = null | number | string | bigint | Byte | Short | Int | Float
     | Buffer | Int32Array | BigInt64Array | TagArray | TagObject
 
 export function getTagType(tag: Tag): TagType {
