@@ -1,4 +1,5 @@
 import { encode, decode, Int, Float } from "../src"
+import * as assert from "assert"
 
 const buffer = encode("root tag name", {
     int: new Int(123456),
@@ -16,4 +17,6 @@ const buffer = encode("root tag name", {
 
 const { name, value } = decode(buffer)
 console.log(value)
-console.log(encode(name, value!).equals(buffer))
+assert(encode(name, value!).equals(buffer))
+
+console.log(decode(Buffer.from("0000010000ff", "hex"), true, 2))

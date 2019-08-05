@@ -1,6 +1,6 @@
 {
   "name": "nbt-ts",
-  "version": "0.1.4",
+  "version": "1.0.0",
   "description": "NBT decoder and encoder",
   "main": "lib",
   "types": "lib",
@@ -21,7 +21,7 @@
   "author": "Janis Pritzkau <janispritzkau@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^10.14.10",
-    "typescript": "^3.5.2"
+    "@types/node": "^10.14.14",
+    "typescript": "^3.5.3"
   }
 }
