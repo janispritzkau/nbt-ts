@@ -11,7 +11,7 @@ Node 10.4 or higher is required for BigInts, which are used to represent 64 bit 
 ## Example
 
 ```js
-import { encode, decode, Int, Float } from "mc-nbt"
+const { encode, decode, Int, Float } = require("nbt-ts")
 
 const buffer = encode("root tag name", {
     int: new Int(123456),
