@@ -1,5 +1,8 @@
 # NBT
 
+[![npm](https://img.shields.io/npm/v/nbt-ts.svg)](https://www.npmjs.com/package/nbt-ts)
+[![downloads](https://img.shields.io/npm/dm/nbt-ts.svg)](https://www.npmjs.com/package/nbt-ts)
+
 An easy to use encoder and decoder for the [NBT format](https://wiki.vg/NBT).
 
 NBT compound tags are represented as plain JavaScript objects. Some types
@@ -8,7 +11,7 @@ types directly, e.g. `Byte`, `Short`, `Int`, `Float`.
 
 Node 10.4 or higher is required for BigInts, which are used to represent 64 bit integers.
 
-## Example
+## Usage
 
 ```js
 const { encode, decode, Int, Float } = require("nbt-ts")
@@ -40,3 +43,21 @@ decode(Buffer.from([0x00]), false) // ⮡ { name: null, value: null, offset: 1 }
 decode(Buffer.from("0000010000ff", "hex"), true, 2)
 // ⮡ { name: '', value: Byte { value: -1 }, offset: 6 }
 ```
+
+## Data types
+
+Here is a list of all data types and their equivalent types in javascript:
+
+- End - `null`
+- Byte - `nbt.Byte`
+- Short - `nbt.Short`
+- Int - `nbt.Int`
+- Long - `bigint`
+- Float - `nbt.Float`
+- Double - `number`
+- Byte_Array - `Buffer`
+- String - `string`
+- List - `nbt.TagArray`
+- Compound - `nbt.TagObject`
+- Int_Array - `Int32Array`
+- Long_Array - `BigInt64Array`
