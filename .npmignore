@@ -1,3 +1,4 @@
-/examples/
-/src/
+/examples
+/src
+/test
 tsconfig.json
