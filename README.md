@@ -33,7 +33,7 @@ const buffer = encode("root tag name", {
 decode(Buffer.from("02000973686F7274546573747FFF", "hex"))
 // ⮡ { name: 'shortTest', value: Short { value: 32767 }, offset: 14 }
 
-// unnamed tag
+// encode unnamed tag
 encode(null, "a") // ⮡ <Buffer 00 00 01 61>
 
 // decode unnamed tag

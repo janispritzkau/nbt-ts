@@ -1,12 +1,12 @@
 import { Tag, TagType, Byte, Float, Int, Short, getTagType, TagObject } from "./tag"
 
+/** Doubles the size of the buffer until the required amount is reached. */
 function accommodate(buffer: Buffer, offset: number, size: number) {
     while (buffer.length < offset + size) {
         buffer = Buffer.concat([buffer, Buffer.alloc(buffer.length)])
     }
     return buffer
 }
-
 
 export function decodeTag(buffer: Buffer, offset: number, type: number) {
     let value: Tag
@@ -95,6 +95,13 @@ interface DecodeResult {
     offset: number
 }
 
+/**
+ * Decodes a nbt tag
+ *
+ * @param hasName Determine whether the nbt tag has a name.
+ * Minecraft uses unnamed tags in slots for example.
+ * @param offset Start decoding at this offset in the buffer
+*/
 export function decode(buffer: Buffer, hasName = true, offset = 0): DecodeResult {
     const type = buffer.readUInt8(offset)
     offset += 1
@@ -109,6 +116,7 @@ export function decode(buffer: Buffer, hasName = true, offset = 0): DecodeResult
     return { name, ...decodeTag(buffer, offset, type) }
 }
 
+/** Encodes a string with it's length prefixed as unsigned 16 bit integer */
 function writeString(text: string, buffer: Buffer, offset: number) {
     const data = Buffer.from(text)
     buffer = accommodate(buffer, offset, data.length + 2)
@@ -118,7 +126,9 @@ function writeString(text: string, buffer: Buffer, offset: number) {
 }
 
 export function encodeTag(tag: Tag, buffer = Buffer.alloc(1024), offset = 0) {
+    // since most of the data types are smaller than 8 bytes, allocate this amount
     buffer = accommodate(buffer, offset, 8)
+
     if (tag instanceof Byte) {
         offset = buffer.writeInt8(tag.value, offset)
     } else if (tag instanceof Short) {
@@ -171,14 +181,22 @@ export function encodeTag(tag: Tag, buffer = Buffer.alloc(1024), offset = 0) {
         buffer = accommodate(buffer, offset, 1)
         offset = buffer.writeUInt8(0, offset)
     }
+
     return { buffer, offset }
 }
 
+/** Encodes a nbt tag. If the name is `null` the nbt tag will be unnamed. */
 export function encode(name: string | null = "", tag: Tag) {
     let buffer = Buffer.alloc(1024), offset = 0
+
+    // write tag type
     offset = buffer.writeUInt8(getTagType(tag), offset);
+
+    // write tag name
     if (name != null) ({ buffer, offset } = writeString(name, buffer, offset));
+
     ({ buffer, offset } = encodeTag(tag, buffer, offset))
+
     return buffer.slice(0, offset)
 }
 
