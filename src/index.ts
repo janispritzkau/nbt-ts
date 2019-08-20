@@ -63,7 +63,8 @@ export function decodeTag(buffer: Buffer, offset: number, type: number) {
         case TagType.IntArray: {
             const len = buffer.readUInt32BE(offset)
             offset += 4
-            const dataview = new DataView(buffer.buffer, offset)
+            if (offset + len * 4 > buffer.length) throw new RangeError("Out of bounds")
+            const dataview = new DataView(buffer.buffer, offset + buffer.byteOffset)
             const array = new Int32Array(len)
             for (let i = 0; i < len; i++) {
                 array[i] = dataview.getInt32(i * 4, false)
@@ -75,7 +76,8 @@ export function decodeTag(buffer: Buffer, offset: number, type: number) {
         case TagType.LongArray: {
             const len = buffer.readUInt32BE(offset)
             offset += 4
-            const dataview = new DataView(buffer.buffer, offset)
+            if (offset + len * 8 > buffer.length) throw new RangeError("Out of bounds")
+            const dataview = new DataView(buffer.buffer, offset + buffer.byteOffset)
             const array = new BigInt64Array(len)
             for (let i = 0; i < len; i++) {
                 array[i] = dataview.getBigInt64(i * 8, false)
@@ -158,20 +160,20 @@ export function encodeTag(tag: Tag, buffer = Buffer.alloc(1024), offset = 0) {
         ({ buffer, offset } = writeString(tag, buffer, offset))
     } else if (tag instanceof Int32Array) {
         offset = buffer.writeUInt32BE(tag.length, offset)
-        buffer = accommodate(buffer, offset, tag.buffer.byteLength)
-        const dataview = new DataView(buffer.buffer, offset)
+        buffer = accommodate(buffer, offset, tag.byteLength)
+        const dataview = new DataView(buffer.buffer, offset + buffer.byteOffset)
         for (let i = 0; i < tag.length; i++) {
             dataview.setInt32(i * 4, tag[i], false)
         }
-        offset += tag.buffer.byteLength
+        offset += tag.byteLength
     } else if (tag instanceof BigInt64Array) {
         offset = buffer.writeUInt32BE(tag.length, offset)
-        buffer = accommodate(buffer, offset, tag.buffer.byteLength)
-        const dataview = new DataView(buffer.buffer, offset)
+        buffer = accommodate(buffer, offset, tag.byteLength)
+        const dataview = new DataView(buffer.buffer, offset + buffer.byteOffset)
         for (let i = 0; i < tag.length; i++) {
             dataview.setBigInt64(i * 8, tag[i], false)
         }
-        offset += tag.buffer.byteLength
+        offset += tag.byteLength
     } else if (tag != null) {
         for (const [key, value] of Object.entries(tag)) {
             offset = buffer.writeUInt8(getTagType(value), offset);
