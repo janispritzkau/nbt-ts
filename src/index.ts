@@ -40,16 +40,17 @@ export function decode(buffer: Buffer, hasName?: boolean | null, offset = 0): De
 }
 
 /** Encodes a nbt tag. If the name is `null` the nbt tag will be unnamed. */
-export function encode(name: string | null = "", tag: Tag) {
+export function encode(name: string | null = "", tag: Tag | null) {
     let buffer = Buffer.alloc(1024), offset = 0
 
     // write tag type
-    offset = buffer.writeUInt8(getTagType(tag), offset);
+    offset = buffer.writeUInt8(tag == null ? TagType.End : getTagType(tag), offset)
 
     // write tag name
-    if (name != null) ({ buffer, offset } = writeString(name, buffer, offset));
+    if (name != null) ({ buffer, offset } = writeString(name, buffer, offset))
 
-    ({ buffer, offset } = encodeTagValue(tag, buffer, offset))
+    // write tag value
+    if (tag != null) ({ buffer, offset } = encodeTagValue(tag, buffer, offset))
 
     return buffer.slice(0, offset)
 }
@@ -66,7 +67,6 @@ function writeString(text: string, buffer: Buffer, offset: number) {
 export function decodeTagValue(buffer: Buffer, offset: number, type: number) {
     let value: Tag
     switch (type) {
-        case TagType.End: value = null; break
         case TagType.Byte: value = new Byte(buffer.readInt8((offset += 1) - 1)); break
         case TagType.Short: value = new Short(buffer.readInt16BE((offset += 2) - 2)); break
         case TagType.Int: value = new Int(buffer.readInt32BE((offset += 4) - 4)); break
@@ -194,7 +194,7 @@ export function encodeTagValue(tag: Tag, buffer = Buffer.alloc(1024), offset = 0
             dataview.setBigInt64(i * 8, tag[i], false)
         }
         offset += tag.byteLength
-    } else if (tag != null) {
+    } else {
         for (const [key, value] of Object.entries(tag)) {
             offset = buffer.writeUInt8(getTagType(value), offset);
             ({ buffer, offset } = writeString(key, buffer, offset));
