@@ -20,7 +20,7 @@ const buffer = encode("root", {
     byte: new Byte(-1),
     short: new Short(65535),
     int: new Int(-2147483648),
-    long: 1000000000000n,
+    long: 0x7fffffffffffffffn,
     float: new Float(0.75),
     double: 0.1 + 0.2,
     string: "Hello world",
@@ -58,7 +58,9 @@ to convert a number to the unsigned representation, you might do something like 
 value & 0xff   // byte
 value & 0xffff // short
 value | 0      // int
-value & 0xffffffffffffffff // long
+value & 0xffffffffffffffffn // long
 // or
 BigInt.asUintN(64, value)
 ```
+
+## Related projects
