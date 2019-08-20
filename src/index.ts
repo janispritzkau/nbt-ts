@@ -1,5 +1,7 @@
 import { Tag, TagType, Byte, Float, Int, Short, getTagType, TagObject } from "./tag"
 
+if (!Buffer.prototype.readBigInt64BE) require("../buffer-bigint.shim")
+
 export * from "./tag"
 
 /** Doubles the size of the buffer until the required amount is reached. */
@@ -70,11 +72,7 @@ export function decodeTagValue(buffer: Buffer, offset: number, type: number) {
         case TagType.Byte: value = new Byte(buffer.readInt8((offset += 1) - 1)); break
         case TagType.Short: value = new Short(buffer.readInt16BE((offset += 2) - 2)); break
         case TagType.Int: value = new Int(buffer.readInt32BE((offset += 4) - 4)); break
-        case TagType.Long: {
-            value = (BigInt(buffer.readUInt32BE(offset)) << 32n) | BigInt(buffer.readUInt32BE(offset + 4))
-            offset += 8
-            break
-        }
+        case TagType.Long: value = buffer.readBigInt64BE((offset += 8) - 8); break
         case TagType.Float: value = new Float(buffer.readFloatBE((offset += 4) - 4)); break
         case TagType.Double: value = buffer.readDoubleBE((offset += 8) - 8); break
         case TagType.ByteArray: {
@@ -108,37 +106,31 @@ export function decodeTagValue(buffer: Buffer, offset: number, type: number) {
                 if (type == TagType.End) break
                 const len = buffer.readUInt16BE(offset)
                 offset += 2
-                const name = buffer.toString("utf-8", offset, offset += len)
-                ;({ value, offset } = decodeTagValue(buffer, offset, type))
+                const name = buffer.toString("utf-8", offset, offset += len);
+                ({ value, offset } = decodeTagValue(buffer, offset, type))
                 object[name] = value
             }
             value = object
             break
         }
         case TagType.IntArray: {
-            const len = buffer.readUInt32BE(offset)
+            const length = buffer.readUInt32BE(offset)
             offset += 4
-            if (offset + len * 4 > buffer.length) throw new RangeError("Out of bounds")
-            const dataview = new DataView(buffer.buffer, offset + buffer.byteOffset)
-            const array = new Int32Array(len)
-            for (let i = 0; i < len; i++) {
-                array[i] = dataview.getInt32(i * 4, false)
+            const array = value = new Int32Array(length)
+            for (let i = 0; i < length; i++) {
+                array[i] = buffer.readInt32BE(offset + i * 4)
             }
             offset += array.buffer.byteLength
-            value = array
             break
         }
         case TagType.LongArray: {
-            const len = buffer.readUInt32BE(offset)
+            const length = buffer.readUInt32BE(offset)
             offset += 4
-            if (offset + len * 8 > buffer.length) throw new RangeError("Out of bounds")
-            const dataview = new DataView(buffer.buffer, offset + buffer.byteOffset)
-            const array = new BigInt64Array(len)
-            for (let i = 0; i < len; i++) {
-                array[i] = dataview.getBigInt64(i * 8, false)
+            const array = value = new BigInt64Array(length)
+            for (let i = 0; i < length; i++) {
+                array[i] = buffer.readBigInt64BE(offset + i * 8)
             }
             offset += array.buffer.byteLength
-            value = array
             break
         }
         default: throw new Error(`Tag type ${type} not implemented`)
@@ -151,14 +143,21 @@ export function encodeTagValue(tag: Tag, buffer = Buffer.alloc(1024), offset = 0
     buffer = accommodate(buffer, offset, 8)
 
     if (tag instanceof Byte) {
-        offset = buffer.writeInt8(tag.value, offset)
+        offset = tag.value < 0
+            ? buffer.writeInt8(tag.value, offset)
+            : buffer.writeUInt8(tag.value, offset)
     } else if (tag instanceof Short) {
-        offset = buffer.writeInt16BE(tag.value, offset)
+        offset = tag.value < 0
+            ? buffer.writeInt16BE(tag.value, offset)
+            : buffer.writeUInt16BE(tag.value, offset)
     } else if (tag instanceof Int) {
-        offset = buffer.writeInt32BE(tag.value, offset)
+        offset = tag.value < 0
+            ? buffer.writeInt32BE(tag.value, offset)
+            : buffer.writeUInt32BE(tag.value, offset)
     } else if (typeof tag == "bigint") {
-        offset = buffer.writeUInt32BE(Number(tag >> 32n), offset)
-        offset = buffer.writeUInt32BE(Number(tag & 0xffffffffn), offset)
+        offset = tag < 0
+            ? buffer.writeBigInt64BE(tag, offset)
+            : buffer.writeBigUInt64BE(tag, offset)
     } else if (tag instanceof Float) {
         offset = buffer.writeFloatBE(tag.value, offset)
     } else if (typeof tag == "number") {
@@ -181,17 +180,15 @@ export function encodeTagValue(tag: Tag, buffer = Buffer.alloc(1024), offset = 0
     } else if (tag instanceof Int32Array) {
         offset = buffer.writeUInt32BE(tag.length, offset)
         buffer = accommodate(buffer, offset, tag.byteLength)
-        const dataview = new DataView(buffer.buffer, offset + buffer.byteOffset)
         for (let i = 0; i < tag.length; i++) {
-            dataview.setInt32(i * 4, tag[i], false)
+            buffer.writeInt32BE(tag[i], offset + i * 4)
         }
         offset += tag.byteLength
     } else if (tag instanceof BigInt64Array) {
         offset = buffer.writeUInt32BE(tag.length, offset)
         buffer = accommodate(buffer, offset, tag.byteLength)
-        const dataview = new DataView(buffer.buffer, offset + buffer.byteOffset)
         for (let i = 0; i < tag.length; i++) {
-            dataview.setBigInt64(i * 8, tag[i], false)
+            buffer.writeBigInt64BE(tag[i], offset + i * 8)
         }
         offset += tag.byteLength
     } else {
