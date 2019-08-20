@@ -1,4 +1,4 @@
-import { Tag, TagType, Byte, Float, Int, Short, getTagType, TagObject } from "./tag"
+import { Tag, TagType, Byte, Float, Int, Short, getTagType, TagObject, TagMap } from "./tag"
 
 if (!Buffer.prototype.readBigInt64BE) require("../buffer-bigint.shim")
 
@@ -25,10 +25,10 @@ interface DecodeResult {
  * tags in slots in its network protocol.
  * @param offset Start decoding at this offset in the buffer
 */
-export function decode(buffer: Buffer, hasName?: boolean | null, offset = 0): DecodeResult {
+export function decode(buffer: Buffer, hasName?: boolean | null, offset = 0, useMaps = false): DecodeResult {
     if (hasName == null) hasName = true
 
-    const type = buffer.readUInt8(offset)
+    const tagType = buffer.readUInt8(offset)
     offset += 1
 
     let name: string | null = null
@@ -38,7 +38,7 @@ export function decode(buffer: Buffer, hasName?: boolean | null, offset = 0): De
         name = buffer.toString("utf-8", offset, offset += len)
     }
 
-    return { name, ...decodeTagValue(buffer, offset, type) }
+    return { name, ...decodeTagValue(tagType, buffer, offset, useMaps) }
 }
 
 /** Encodes a nbt tag. If the name is `null` the nbt tag will be unnamed. */
@@ -66,7 +66,7 @@ function writeString(text: string, buffer: Buffer, offset: number) {
     return { buffer, offset }
 }
 
-export function decodeTagValue(buffer: Buffer, offset: number, type: number) {
+export function decodeTagValue(type: number, buffer: Buffer, offset: number, useMaps: boolean) {
     let value: Tag
     switch (type) {
         case TagType.Byte: value = new Byte(buffer.readInt8((offset += 1) - 1)); break
@@ -92,14 +92,14 @@ export function decodeTagValue(buffer: Buffer, offset: number, type: number) {
             offset += 5
             const items: Tag[] = []
             for (let i = 0; i < len; i++) {
-                ({ value, offset } = decodeTagValue(buffer, offset, type))
+                ({ value, offset } = decodeTagValue(type, buffer, offset, useMaps))
                 items.push(value)
             }
             value = items
             break
         }
         case TagType.Compound: {
-            let object: TagObject = {}
+            const object = useMaps ? new Map : {}
             while (true) {
                 const type = buffer.readUInt8(offset)
                 offset += 1
@@ -107,8 +107,9 @@ export function decodeTagValue(buffer: Buffer, offset: number, type: number) {
                 const len = buffer.readUInt16BE(offset)
                 offset += 2
                 const name = buffer.toString("utf-8", offset, offset += len);
-                ({ value, offset } = decodeTagValue(buffer, offset, type))
-                object[name] = value
+                ({ value, offset } = decodeTagValue(type, buffer, offset, useMaps))
+                if (useMaps) (<TagMap>object).set(name, value)
+                else (<TagObject>object)[name] = value
             }
             value = object
             break
@@ -138,7 +139,7 @@ export function decodeTagValue(buffer: Buffer, offset: number, type: number) {
     return { value: <Tag>value, offset }
 }
 
-export function encodeTagValue(tag: Tag, buffer = Buffer.alloc(1024), offset = 0) {
+export function encodeTagValue(tag: Tag, buffer: Buffer, offset: number) {
     // since most of the data types are smaller than 8 bytes, allocate this amount
     buffer = accommodate(buffer, offset, 8)
 
@@ -192,7 +193,7 @@ export function encodeTagValue(tag: Tag, buffer = Buffer.alloc(1024), offset = 0
         }
         offset += tag.byteLength
     } else {
-        for (const [key, value] of Object.entries(tag)) {
+        for (const [key, value] of tag instanceof Map ? tag : Object.entries(tag)) {
             offset = buffer.writeUInt8(getTagType(value), offset);
             ({ buffer, offset } = writeString(key, buffer, offset));
             ({ buffer, offset } = encodeTagValue(value, buffer, offset))

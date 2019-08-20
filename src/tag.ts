@@ -15,29 +15,31 @@ export enum TagType {
 }
 
 export class Byte {
-    constructor(public value: number) {}
+    constructor(public value: number) { }
     valueOf() { return this.value }
 }
 
 export class Short {
-    constructor(public value: number) {}
+    constructor(public value: number) { }
     valueOf() { return this.value }
 }
 
 export class Int {
-    constructor(public value: number) {}
+    constructor(public value: number) { }
     valueOf() { return this.value }
 }
 
 export class Float {
-    constructor(public value: number) {}
+    constructor(public value: number) { }
     valueOf() { return this.value }
 }
 
-export interface TagArray extends Array<Tag> {}
+export interface TagArray extends Array<Tag> { }
 export interface TagObject { [key: string]: Tag }
-export type Tag = number | string | bigint | Byte | Short | Int | Float
-    | Buffer | Int8Array | Int32Array | BigInt64Array | TagArray | TagObject
+export interface TagMap extends Map<string, Tag> { }
+
+export type Tag = number | string | bigint | Byte | Short | Int | Float | Buffer
+    | Int8Array | Int32Array | BigInt64Array | TagArray | TagObject | TagMap
 
 export function getTagType(tag: Tag): TagType {
     if (tag instanceof Byte) return TagType.Byte
@@ -49,7 +51,7 @@ export function getTagType(tag: Tag): TagType {
     if (tag instanceof Buffer || tag instanceof Int8Array) return TagType.ByteArray
     if (typeof tag == "string") return TagType.String
     if (tag instanceof Array) return TagType.List
-    if (tag.constructor == Object) return TagType.Compound
+    if (tag.constructor == Object || tag instanceof Map) return TagType.Compound
     if (tag instanceof Int32Array) return TagType.IntArray
     if (tag instanceof BigInt64Array) return TagType.LongArray
     throw new Error("Invalid tag value")
