@@ -37,7 +37,7 @@ export class Float {
 export interface TagArray extends Array<Tag> {}
 export interface TagObject { [key: string]: Tag }
 export type Tag = null | number | string | bigint | Byte | Short | Int | Float
-    | Buffer | Int32Array | BigInt64Array | TagArray | TagObject
+    | Buffer | Int8Array | Int32Array | BigInt64Array | TagArray | TagObject
 
 export function getTagType(tag: Tag): TagType {
     if (tag == null) return TagType.End
@@ -47,7 +47,7 @@ export function getTagType(tag: Tag): TagType {
     if (typeof tag == "bigint") return TagType.Long
     if (tag instanceof Float) return TagType.Float
     if (typeof tag == "number") return TagType.Double
-    if (tag instanceof Buffer) return TagType.ByteArray
+    if (tag instanceof Buffer || tag instanceof Int8Array) return TagType.ByteArray
     if (typeof tag == "string") return TagType.String
     if (tag instanceof Array) return TagType.List
     if (tag.constructor == Object) return TagType.Compound

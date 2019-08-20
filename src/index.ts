@@ -1,5 +1,7 @@
 import { Tag, TagType, Byte, Float, Int, Short, getTagType, TagObject } from "./tag"
 
+export * from "./tag"
+
 /** Doubles the size of the buffer until the required amount is reached. */
 function accommodate(buffer: Buffer, offset: number, size: number) {
     while (buffer.length < offset + size) {
@@ -8,7 +10,60 @@ function accommodate(buffer: Buffer, offset: number, size: number) {
     return buffer
 }
 
-export function decodeTag(buffer: Buffer, offset: number, type: number) {
+interface DecodeResult {
+    name: string | null
+    value: Tag
+    offset: number
+}
+
+/**
+ * Decodes a nbt tag
+ *
+ * @param hasName Expect nbt tag to have a name. For example, Minecraft uses unnamed
+ * tags in slots in its network protocol.
+ * @param offset Start decoding at this offset in the buffer
+*/
+export function decode(buffer: Buffer, hasName?: boolean | null, offset = 0): DecodeResult {
+    if (hasName == null) hasName = true
+
+    const type = buffer.readUInt8(offset)
+    offset += 1
+
+    let name: string | null = null
+    if (hasName) {
+        const len = buffer.readUInt16BE(offset)
+        offset += 2
+        name = buffer.toString("utf-8", offset, offset += len)
+    }
+
+    return { name, ...decodeTagValue(buffer, offset, type) }
+}
+
+/** Encodes a nbt tag. If the name is `null` the nbt tag will be unnamed. */
+export function encode(name: string | null = "", tag: Tag) {
+    let buffer = Buffer.alloc(1024), offset = 0
+
+    // write tag type
+    offset = buffer.writeUInt8(getTagType(tag), offset);
+
+    // write tag name
+    if (name != null) ({ buffer, offset } = writeString(name, buffer, offset));
+
+    ({ buffer, offset } = encodeTagValue(tag, buffer, offset))
+
+    return buffer.slice(0, offset)
+}
+
+/** Encodes a string with it's length prefixed as unsigned 16 bit integer */
+function writeString(text: string, buffer: Buffer, offset: number) {
+    const data = Buffer.from(text)
+    buffer = accommodate(buffer, offset, data.length + 2)
+    offset = buffer.writeUInt16BE(data.length, offset)
+    data.copy(buffer, offset), offset += data.length
+    return { buffer, offset }
+}
+
+export function decodeTagValue(buffer: Buffer, offset: number, type: number) {
     let value: Tag
     switch (type) {
         case TagType.End: value = null; break
@@ -39,7 +94,7 @@ export function decodeTag(buffer: Buffer, offset: number, type: number) {
             offset += 5
             const items: Tag[] = []
             for (let i = 0; i < len; i++) {
-                ({ value, offset } = decodeTag(buffer, offset, type))
+                ({ value, offset } = decodeTagValue(buffer, offset, type))
                 items.push(value)
             }
             value = items
@@ -54,7 +109,7 @@ export function decodeTag(buffer: Buffer, offset: number, type: number) {
                 const len = buffer.readUInt16BE(offset)
                 offset += 2
                 const name = buffer.toString("utf-8", offset, offset += len)
-                ;({ value, offset } = decodeTag(buffer, offset, type))
+                ;({ value, offset } = decodeTagValue(buffer, offset, type))
                 object[name] = value
             }
             value = object
@@ -91,43 +146,7 @@ export function decodeTag(buffer: Buffer, offset: number, type: number) {
     return { value: <Tag>value, offset }
 }
 
-interface DecodeResult {
-    name: string | null
-    value: Tag
-    offset: number
-}
-
-/**
- * Decodes a nbt tag
- *
- * @param hasName Determine whether the nbt tag has a name.
- * Minecraft uses unnamed tags in slots for example.
- * @param offset Start decoding at this offset in the buffer
-*/
-export function decode(buffer: Buffer, hasName = true, offset = 0): DecodeResult {
-    const type = buffer.readUInt8(offset)
-    offset += 1
-
-    let name: string | null = null
-    if (hasName) {
-        const len = buffer.readUInt16BE(offset)
-        offset += 2
-        name = buffer.toString("utf-8", offset, offset += len)
-    }
-
-    return { name, ...decodeTag(buffer, offset, type) }
-}
-
-/** Encodes a string with it's length prefixed as unsigned 16 bit integer */
-function writeString(text: string, buffer: Buffer, offset: number) {
-    const data = Buffer.from(text)
-    buffer = accommodate(buffer, offset, data.length + 2)
-    offset = buffer.writeUInt16BE(data.length, offset)
-    data.copy(buffer, offset), offset += data.length
-    return { buffer, offset }
-}
-
-export function encodeTag(tag: Tag, buffer = Buffer.alloc(1024), offset = 0) {
+export function encodeTagValue(tag: Tag, buffer = Buffer.alloc(1024), offset = 0) {
     // since most of the data types are smaller than 8 bytes, allocate this amount
     buffer = accommodate(buffer, offset, 8)
 
@@ -144,17 +163,18 @@ export function encodeTag(tag: Tag, buffer = Buffer.alloc(1024), offset = 0) {
         offset = buffer.writeFloatBE(tag.value, offset)
     } else if (typeof tag == "number") {
         offset = buffer.writeDoubleBE(tag, offset)
-    } else if (tag instanceof Buffer) {
+    } else if (tag instanceof Buffer || tag instanceof Int8Array) {
         offset = buffer.writeUInt32BE(tag.length, offset)
-        buffer = accommodate(buffer, offset, tag.length)
-        tag.copy(buffer, offset), offset += tag.length
+        buffer = accommodate(buffer, offset, tag.length);
+        (tag instanceof Buffer ? tag : Buffer.from(tag)).copy(buffer, offset)
+        offset += tag.length
     } else if (tag instanceof Array) {
         const type = tag.length > 0 ? getTagType(tag[0]) : TagType.End
         offset = buffer.writeUInt8(type, offset)
         offset = buffer.writeUInt32BE(tag.length, offset)
         for (const item of tag) {
             if (getTagType(item) != type) throw new Error("Odd tag type in list");
-            ({ buffer, offset } = encodeTag(item, buffer, offset))
+            ({ buffer, offset } = encodeTagValue(item, buffer, offset))
         }
     } else if (typeof tag == "string") {
         ({ buffer, offset } = writeString(tag, buffer, offset))
@@ -178,7 +198,7 @@ export function encodeTag(tag: Tag, buffer = Buffer.alloc(1024), offset = 0) {
         for (const [key, value] of Object.entries(tag)) {
             offset = buffer.writeUInt8(getTagType(value), offset);
             ({ buffer, offset } = writeString(key, buffer, offset));
-            ({ buffer, offset } = encodeTag(value, buffer, offset))
+            ({ buffer, offset } = encodeTagValue(value, buffer, offset))
         }
         buffer = accommodate(buffer, offset, 1)
         offset = buffer.writeUInt8(0, offset)
@@ -186,20 +206,3 @@ export function encodeTag(tag: Tag, buffer = Buffer.alloc(1024), offset = 0) {
 
     return { buffer, offset }
 }
-
-/** Encodes a nbt tag. If the name is `null` the nbt tag will be unnamed. */
-export function encode(name: string | null = "", tag: Tag) {
-    let buffer = Buffer.alloc(1024), offset = 0
-
-    // write tag type
-    offset = buffer.writeUInt8(getTagType(tag), offset);
-
-    // write tag name
-    if (name != null) ({ buffer, offset } = writeString(name, buffer, offset));
-
-    ({ buffer, offset } = encodeTag(tag, buffer, offset))
-
-    return buffer.slice(0, offset)
-}
-
-export { Tag, TagObject, TagType, Byte, Short, Int, Float, getTagType }
