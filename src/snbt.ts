@@ -1,5 +1,7 @@
 import * as nbt from "."
 
+const unquotedRegExp = /^[0-9A-Za-z.+_-]$/
+
 export function stringify(tag: nbt.Tag, pretty = false): string {
     const space = " ".repeat(4)
 
@@ -23,7 +25,7 @@ export function stringify(tag: nbt.Tag, pretty = false): string {
             }
         } else {
             const pairs = (tag instanceof Map ? [...tag] : Object.entries(tag)).map(([key, tag]) => {
-                if (!/^[a-zA-Z0-9._+-]+$/.test(key)) {
+                if (!unquotedRegExp.test(key)) {
                     key = `"${key.replace('"', '\\"')}"`
                 }
                 return `${key}:${pretty ? " " : ""}${stringify(tag, depth + 1)}`
@@ -54,7 +56,7 @@ export function parse(text: string) {
         }
     }
 
-    function parseNumber() {
+    function readNumber() {
         if (!"-0123456789".includes(text[index])) return null
         i = index++
         let hasFloatingPoint = false
@@ -83,17 +85,18 @@ export function parse(text: string) {
         else return new nbt.Int(+text.slice(i, index))
     }
 
-    function parseUnquotedString(fail = false) {
+    function readUnquotedString() {
         i = index
         while (index < text.length) {
-            if (!/^[a-zA-Z0-9._+-]$/.test(text[index])) break
+            if (!unquotedRegExp.test(text[index])) break
             index++
         }
         if (index - i == 0) throw index == text.length ? unexpectedEnd() : unexpectedChar()
         return text.slice(i, index)
     }
 
-    function parseQuotedString() {
+    function readQuotedString() {
+        const quoteChar = text[index]
         i = ++index
         let string = ""
         while (index < text.length) {
@@ -101,14 +104,14 @@ export function parse(text: string) {
             if (char == "\\") {
                 string += text.slice(i, index - 1) + text[index]
                 i = ++index
-            } else if (char == '"') return string + text.slice(i, index - 1)
+            } else if (char == quoteChar) return string + text.slice(i, index - 1)
         }
         throw unexpectedEnd()
     }
 
-    function parseString() {
-        if (text[index] == '"') return parseQuotedString()
-        else return parseUnquotedString()
+    function readString() {
+        if (text[index] == '"' || text[index] == "'") return readQuotedString()
+        else return readUnquotedString()
     }
 
     function skipCommas(isFirst: boolean, end: string) {
@@ -121,19 +124,19 @@ export function parse(text: string) {
         }
     }
 
-    function parseCompound() {
+    function readCompound() {
         const object: nbt.TagObject = {}
         let first = true
         while (true) {
             skipCommas(first, "}"), first = false
             if (text[index] == "}") return (index++ , object)
-            const key = parseString()
+            const key = readString()
             if (text[index++] != ":") throw unexpectedChar()
             object[key] = parse() as any
         }
     }
 
-    function parseArray(type: string) {
+    function readArray(type: string) {
         const array: string[] = []
         while (index < text.length) {
             skipCommas(array.length == 0, "]")
@@ -156,9 +159,9 @@ export function parse(text: string) {
         throw unexpectedEnd()
     }
 
-    function parseList() {
+    function readList() {
         if ("BIL".includes(text[index]) && text[index + 1] == ";") {
-            return parseArray(text[(index += 2) - 2])
+            return readArray(text[(index += 2) - 2])
         }
         const array: nbt.TagArray = []
         while (index < text.length) {
@@ -178,12 +181,12 @@ export function parse(text: string) {
     function parse() {
         skipWhitespace()
         i = index, char = text[index]
-        if (char == "{") return (index++ , parseCompound())
-        else if (char == "[") return (index++ , parseList())
-        else if (char == '"') return parseQuotedString()
-        const value = parseNumber()
+        if (char == "{") return (index++ , readCompound())
+        else if (char == "[") return (index++ , readList())
+        else if (char == '"' || char == "'") return readQuotedString()
+        const value = readNumber()
         if (value != null && (index == text.length || "\n ,]}".includes(text[index]))) return value
-        return text.slice(i, index) + parseUnquotedString(true)
+        return text.slice(i, index) + readUnquotedString()
     }
 
     const value = parse()
