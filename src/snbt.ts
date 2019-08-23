@@ -2,38 +2,58 @@ import * as nbt from "."
 
 const unquotedRegExp = /^[0-9A-Za-z.+_-]$/
 
-export function stringify(tag: nbt.Tag, pretty = false): string {
-    const space = " ".repeat(4)
+export interface StringifyOptions {
+    pretty?: boolean
+    breakLength?: number
+    quote?: "single" | "double"
+}
+
+export function stringify(tag: nbt.Tag, options: StringifyOptions = {}): string {
+    const pretty = !!options.pretty, breakLength = options.breakLength || 70
+    const quoteChar = options.quote == "single" ? "'" : options.quote == "double" ? '"' : null
+    const spaces = " ".repeat(4)
+
+    function escapeString(text: string) {
+        const q = quoteChar != null
+            ? quoteChar
+            : text.split('"', 4).length > text.split("'", 4).length ? "'" : '"'
+        return `${q}${text.replace(q, `\\${q}`)}${q}`
+    }
 
     function stringify(tag: nbt.Tag, depth: number): string {
+        const space = pretty ? " " : "", sep = pretty ? ", " : ","
         if (tag instanceof nbt.Byte) return `${tag.value}b`
         else if (tag instanceof nbt.Short) return `${tag.value}s`
         else if (tag instanceof nbt.Int) return `${tag.value | 0}`
         else if (typeof tag == "bigint") return `${tag}l`
         else if (tag instanceof nbt.Float) return `${tag.value}f`
-        else if (typeof tag == "number") return Number.isInteger(tag) ? `${tag}.0` : tag.toString()
-        else if (typeof tag == "string") return `"${tag.replace('"', '\\"')}"`
-        else if (tag instanceof Buffer || tag instanceof Int8Array) return `[B;${[...tag].join(",")}]`
-        else if (tag instanceof Int32Array) return `[I;${[...tag].join(",")}]`
-        else if (tag instanceof BigInt64Array) return `[L;${[...tag].join(",")}]`
+        else if (typeof tag == "number")
+            return Number.isInteger(tag) ? `${tag}.0` : tag.toString()
+        else if (typeof tag == "string") return escapeString(tag)
+        else if (tag instanceof Buffer
+            || tag instanceof Int8Array) return `[B;${space}${[...tag].join(sep)}]`
+        else if (tag instanceof Int32Array) return `[I;${space}${[...tag].join(sep)}]`
+        else if (tag instanceof BigInt64Array) return `[L;${space}${[...tag].join(sep)}]`
         else if (tag instanceof Array) {
             const list = tag.map(tag => stringify(tag, depth + 1))
-            if (list.reduce((acc, x) => acc + x.length, 0) > 70 || list.some(text => text.includes("\n"))) {
-                return `[\n${list.map(text => space.repeat(depth) + text).join(",\n")}\n${space.repeat(depth - 1)}]`
+            if (list.reduce((acc, x) => acc + x.length, 0) > breakLength
+                || list.some(text => text.includes("\n"))) {
+                return `[\n${list.map(text => spaces.repeat(depth)
+                    + text).join(",\n")}\n${spaces.repeat(depth - 1)}]`
             } else {
-                return `[${list.join(pretty ? ", " : ",")}]`
+                return `[${list.join(sep)}]`
             }
         } else {
-            const pairs = (tag instanceof Map ? [...tag] : Object.entries(tag)).map(([key, tag]) => {
-                if (!unquotedRegExp.test(key)) {
-                    key = `"${key.replace('"', '\\"')}"`
-                }
-                return `${key}:${pretty ? " " : ""}${stringify(tag, depth + 1)}`
-            })
-            if (pretty && pairs.reduce((acc, x) => acc + x.length, 0) > 70) {
-                return `{\n${pairs.map(text => space.repeat(depth) + text).join(",\n")}\n${space.repeat(depth - 1)}}`
+            const pairs = (tag instanceof Map ? [...tag] : Object.entries(tag))
+                .map(([key, tag]) => {
+                    if (!unquotedRegExp.test(key)) key = escapeString(key)
+                    return `${key}:${space}${stringify(tag, depth + 1)}`
+                })
+            if (pretty && pairs.reduce((acc, x) => acc + x.length, 0) > breakLength) {
+                return `{\n${pairs.map(text => spaces.repeat(depth)
+                    + text).join(",\n")}\n${spaces.repeat(depth - 1)}}`
             } else {
-                return pretty ? `{ ${pairs.join(", ")} }` : `{${pairs.join(",")}}`
+                return `{${space}${pairs.join(sep)}${space}}`
             }
         }
     }
@@ -153,7 +173,7 @@ export function parse(text: string) {
                 index++
             }
             if (index - i == 0) throw unexpectedChar()
-            if (!"\n ],".includes(text[index])) throw unexpectedChar()
+            if (unquotedRegExp.test(text[index])) throw unexpectedChar()
             array.push(text.slice(i, index))
         }
         throw unexpectedEnd()
@@ -180,12 +200,16 @@ export function parse(text: string) {
 
     function parse() {
         skipWhitespace()
+
         i = index, char = text[index]
         if (char == "{") return (index++ , readCompound())
         else if (char == "[") return (index++ , readList())
         else if (char == '"' || char == "'") return readQuotedString()
+
         const value = readNumber()
-        if (value != null && (index == text.length || "\n ,]}".includes(text[index]))) return value
+        if (value != null && (index == text.length || !unquotedRegExp.test(text[index]))) {
+            return value
+        }
         return text.slice(i, index) + readUnquotedString()
     }
 
