@@ -63,4 +63,39 @@ value & 0xffffffffffffffffn // long
 BigInt.asUintN(64, value)
 ```
 
-## Related projects
+## SNBT
+
+The NBT format also has a more human readable variant which is called **SNBT**,
+short for **stringified NBT**.
+
+The equivalent of the NBT tag shown in the first example would be this in SNBT:
+
+```
+{
+    byte: -1b,
+    short: -1s,
+    int: -214748364,
+    long: 9223372036854775807l,
+    float: 0.75f,
+    double: 0.30000000000000004,
+    string: "Hello world",
+    list: ["item 1", "item 2"],
+    compound: {
+        byteArray: [B; 128, 64, 32],
+        intArray: [I; 1, 2, 3, 4],
+        longArray: [L; 1, 2, 3, 4]
+    }
+}
+```
+
+Here is an example how you can stringify or parse SNBT:
+
+```js
+const { stringify, parse } = require("nbt-ts")
+
+const tag = parse(`{ "Flying": 1b ,} `)
+// → { Flying: Byte { value: 1 } }
+
+stringify(tag)
+// → '{Flying:1b}'
+```
