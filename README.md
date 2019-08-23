@@ -64,3 +64,8 @@ BigInt.asUintN(64, value)
 ```
 
 ## Related projects
+
+- [`mc-chat-format`](https://github.com/janispritzkau/mc-chat-format).
+    Converts and formats Minecraft's JSON Chat components.
+- [`mcproto`](https://github.com/janispritzkau/mcproto) (Minecraft protocol implementation)
+- [`rcon-client`](https://github.com/janispritzkau/rcon-client)
