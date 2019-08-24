@@ -55,10 +55,10 @@ However when decoded, they will always have the signed representation. If you wa
 to convert a number to the unsigned representation, you might do something like this:
 
 ```js
-value & 0xff   // byte
-value & 0xffff // short
-value | 0      // int
-value & 0xffffffffffffffffn // long
+value & 0xff   // for bytes
+value & 0xffff // for shorts
+value >>> 0    // for ints
+value & 0xffffffffffffffffn // for longs
 // or
 BigInt.asUintN(64, value)
 ```
