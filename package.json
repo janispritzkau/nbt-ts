@@ -1,7 +1,7 @@
 {
   "name": "nbt-ts",
-  "version": "1.2.0",
-  "description": "Easy to use NBT encoder and decoder",
+  "version": "1.2.1",
+  "description": "An easy to use encoder and decoder for the NBT format",
   "main": "lib",
   "types": "lib",
   "repository": {
