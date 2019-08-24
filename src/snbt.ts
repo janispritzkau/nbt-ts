@@ -151,6 +151,7 @@ export function parse(text: string) {
             skipCommas(first, "}"), first = false
             if (text[index] == "}") return (index++ , object)
             const key = readString()
+            skipWhitespace()
             if (text[index++] != ":") throw unexpectedChar()
             object[key] = parse() as any
         }
