@@ -65,21 +65,16 @@ BigInt.asUintN(64, value)
 
 ## SNBT
 
-The NBT format also has a more human readable variant which is called **SNBT**,
-short for **stringified NBT**.
-
-The equivalent of the NBT tag shown in the first example would be this in SNBT:
+The NBT format also has a more user-friendly variant in plain text. This format
+is referred to as **SNBT**, short for **stringified NBT**.
+Here are all the types represented in SNBT:
 
 ```
 {
-    byte: -1b,
-    short: -1s,
-    int: -214748364,
-    long: 9223372036854775807l,
-    float: 0.75f,
-    double: 0.30000000000000004,
+    byte: 1b, short: 1s, int: 1, long: 1l,
+    float: 0.5f, double: 0.5,
     string: "Hello world",
-    list: ["item 1", "item 2"],
+    list: [{}, {}],
     compound: {
         byteArray: [B; 128, 64, 32],
         intArray: [I; 1, 2, 3, 4],
@@ -93,9 +88,16 @@ Here is an example how you can stringify or parse SNBT:
 ```js
 const { stringify, parse } = require("nbt-ts")
 
-const tag = parse(`{ "Flying": 1b ,} `)
-// → { Flying: Byte { value: 1 } }
+const tag = parse(`{'Flying' :1b , unquoted: hello} `)
+// → { Flying: Byte { value: 1 }, unquoted: 'hello' }
 
 stringify(tag)
-// → '{Flying:1b}'
+// → '{Flying:1b,unquoted:"hello"}'
 ```
+
+## Related projects
+
+- [`mc-chat-format`](https://github.com/janispritzkau/mc-chat-format).
+    Converts and formats Minecraft's JSON Chat components.
+- [`mcproto`](https://github.com/janispritzkau/mcproto) (Minecraft protocol implementation)
+- [`rcon-client`](https://github.com/janispritzkau/rcon-client)
