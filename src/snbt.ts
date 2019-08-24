@@ -1,6 +1,6 @@
 import * as nbt from "."
 
-const unquotedRegExp = /^[0-9A-Za-z.+_-]$/
+const unquotedRegExp = /^[0-9A-Za-z.+_-]+$/
 
 export interface StringifyOptions {
     pretty?: boolean
