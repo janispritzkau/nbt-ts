@@ -3,6 +3,7 @@ import { Tag, TagType, Byte, Float, Int, Short, getTagType, TagObject, TagMap } 
 if (!Buffer.prototype.readBigInt64BE) require("../buffer-bigint.shim")
 
 export * from "./tag"
+export * from "./snbt"
 
 /** Doubles the size of the buffer until the required amount is reached. */
 function accommodate(buffer: Buffer, offset: number, size: number) {

@@ -63,6 +63,38 @@ value & 0xffffffffffffffffn // long
 BigInt.asUintN(64, value)
 ```
 
+## SNBT
+
+The NBT format also has a more user-friendly variant in plain text. This format
+is referred to as **SNBT**, short for **stringified NBT**.
+Here are all the types represented in SNBT:
+
+```
+{
+    byte: 1b, short: 1s, int: 1, long: 1l,
+    float: 0.5f, double: 0.5,
+    string: "Hello world",
+    list: [{}, {}],
+    compound: {
+        byteArray: [B; 128, 64, 32],
+        intArray: [I; 1, 2, 3, 4],
+        longArray: [L; 1, 2, 3, 4]
+    }
+}
+```
+
+Here is an example how you can stringify or parse SNBT:
+
+```js
+const { stringify, parse } = require("nbt-ts")
+
+const tag = parse(`{'Flying' :1b , unquoted: hello} `)
+// → { Flying: Byte { value: 1 }, unquoted: 'hello' }
+
+stringify(tag)
+// → '{Flying:1b,unquoted:"hello"}'
+```
+
 ## Related projects
 
 - [`mc-chat-format`](https://github.com/janispritzkau/mc-chat-format).
