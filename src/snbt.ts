@@ -87,15 +87,15 @@ export function parse(text: string) {
             } else if (char == ".") {
                 if (hasFloatingPoint) return (index-- , null)
                 hasFloatingPoint = true
-            } else if (char == "f") {
+            } else if (char == "f" || char == "F") {
                 return new nbt.Float(+text.slice(i, index - 1))
-            } else if (char == "d") {
+            } else if (char == "d" || char == "D") {
                 return +text.slice(i, index - 1)
-            } else if (char == "b") {
+            } else if (char == "b" || char == "B") {
                 return new nbt.Byte(+text.slice(i, index - 1))
-            } else if (char == "s") {
+            } else if (char == "s" || char == "S") {
                 return new nbt.Short(+text.slice(i, index - 1))
-            } else if (char == "l") {
+            } else if (char == "l" || char == "L") {
                 return BigInt(text.slice(i, index - 1))
             } else if (hasFloatingPoint) {
                 return +text.slice(i, --index)
@@ -181,8 +181,8 @@ export function parse(text: string) {
     }
 
     function readList() {
-        if ("BIL".includes(text[index]) && text[index + 1] == ";") {
-            return readArray(text[(index += 2) - 2])
+        if ("BILbil".includes(text[index]) && text[index + 1] == ";") {
+            return readArray(text[(index += 2) - 2].toUpperCase())
         }
         const array: nbt.TagArray = []
         while (index < text.length) {
