@@ -15,7 +15,7 @@ function accommodate(buffer: Buffer, offset: number, size: number) {
 
 interface DecodeResult {
     name: string | null
-    value: Tag
+    value: Tag | null
     offset: number
 }
 
@@ -38,6 +38,8 @@ export function decode(buffer: Buffer, hasName?: boolean | null, offset = 0, use
         offset += 2
         name = buffer.toString("utf-8", offset, offset += len)
     }
+
+    if (tagType == TagType.End) return { name, value: null, offset }
 
     return { name, ...decodeTagValue(tagType, buffer, offset, useMaps) }
 }
