@@ -32,14 +32,14 @@ export function decode(buffer: Buffer, hasName?: boolean | null, offset = 0, use
     const tagType = buffer.readUInt8(offset)
     offset += 1
 
+    if (tagType == TagType.End) return { name: null, value: null, offset }
+
     let name: string | null = null
     if (hasName) {
         const len = buffer.readUInt16BE(offset)
         offset += 2
         name = buffer.toString("utf-8", offset, offset += len)
     }
-
-    if (tagType == TagType.End) return { name, value: null, offset }
 
     return { name, ...decodeTagValue(tagType, buffer, offset, useMaps) }
 }
