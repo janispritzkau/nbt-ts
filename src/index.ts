@@ -52,7 +52,7 @@ export function encode(name: string | null = "", tag: Tag | null) {
     offset = buffer.writeUInt8(tag == null ? TagType.End : getTagType(tag), offset)
 
     // write tag name
-    if (name != null) ({ buffer, offset } = writeString(name, buffer, offset))
+    if (tag != null && name != null) ({ buffer, offset } = writeString(name, buffer, offset))
 
     // write tag value
     if (tag != null) ({ buffer, offset } = encodeTagValue(tag, buffer, offset))
