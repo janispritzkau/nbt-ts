@@ -12,7 +12,6 @@ const { name, value } = nbt.decode(bigtestBuffer)
 assert(nbt.encode(name, value).equals(bigtestBuffer))
 
 assert.throws(() => nbt.encode(null, [1, "a"]))
-assert.throws(() => nbt.decode(Buffer.from("00", "hex")))
 assert.throws(() => nbt.decode(Buffer.from("99", "hex"), false))
 assert.throws(() => nbt.decode(Buffer.from("00000b00000001", "hex").slice(2), false))
 
