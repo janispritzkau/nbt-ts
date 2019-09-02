@@ -8,7 +8,7 @@ export * from "./snbt"
 export interface DecodeResult {
     name: string | null
     value: Tag | null
-    offset: number
+    length: number
 }
 
 export interface DecodeOptions {
@@ -22,12 +22,12 @@ export interface DecodeOptions {
  * Decode a nbt tag from buffer.
  *
  * The result contains the decoded nbt value, the tag's name, if present,
- * and an offset of how much was read from the buffer.
+ * and the length of how much was read from the buffer.
  */
 export function decode(buffer: Buffer, options: DecodeOptions = {}): DecodeResult {
     const tagType = buffer.readUInt8(0)
 
-    if (tagType == TagType.End) return { name: null, value: null, offset: 1 }
+    if (tagType == TagType.End) return { name: null, value: null, length: 1 }
 
     let name: string | null = null
     let offset = 1
@@ -38,7 +38,8 @@ export function decode(buffer: Buffer, options: DecodeOptions = {}): DecodeResul
         name = buffer.toString("utf-8", offset, offset += len)
     }
 
-    return { name, ...decodeTagValue(tagType, buffer, offset, !!options.useMaps) }
+    const result = decodeTagValue(tagType, buffer, offset, !!options.useMaps)
+    return { name, value: result.value, length: result.offset }
 }
 
 /**
