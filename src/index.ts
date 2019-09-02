@@ -5,47 +5,49 @@ if (!Buffer.prototype.readBigInt64BE) require("../buffer-bigint.shim")
 export * from "./tag"
 export * from "./snbt"
 
-/** Doubles the size of the buffer until the required amount is reached. */
-function accommodate(buffer: Buffer, offset: number, size: number) {
-    while (buffer.length < offset + size) {
-        buffer = Buffer.concat([buffer, Buffer.alloc(buffer.length)])
-    }
-    return buffer
-}
-
-interface DecodeResult {
+export interface DecodeResult {
     name: string | null
     value: Tag | null
     offset: number
 }
 
+export interface DecodeOptions {
+    /** Use ES6 `Map`s for compound tags instead of plain objects. */
+    useMaps?: boolean
+    /** Whether the root tag has a name. */
+    unnamed?: boolean
+}
+
 /**
- * Decodes a nbt tag
+ * Decode a nbt tag from buffer.
  *
- * @param hasName Expect nbt tag to have a name. For example, Minecraft uses unnamed
- * tags in slots in its network protocol.
- * @param offset Start decoding at this offset in the buffer
-*/
-export function decode(buffer: Buffer, hasName?: boolean | null, offset = 0, useMaps = false): DecodeResult {
-    if (hasName == null) hasName = true
+ * The result contains the decoded nbt value, the tag's name, if present,
+ * and an offset of how much was read from the buffer.
+ */
+export function decode(buffer: Buffer, options: DecodeOptions = {}): DecodeResult {
+    const tagType = buffer.readUInt8(0)
 
-    const tagType = buffer.readUInt8(offset)
-    offset += 1
-
-    if (tagType == TagType.End) return { name: null, value: null, offset }
+    if (tagType == TagType.End) return { name: null, value: null, offset: 1 }
 
     let name: string | null = null
-    if (hasName) {
+    let offset = 1
+
+    if (!options.unnamed) {
         const len = buffer.readUInt16BE(offset)
         offset += 2
         name = buffer.toString("utf-8", offset, offset += len)
     }
 
-    return { name, ...decodeTagValue(tagType, buffer, offset, useMaps) }
+    return { name, ...decodeTagValue(tagType, buffer, offset, !!options.useMaps) }
 }
 
-/** Encodes a nbt tag. If the name is `null` the nbt tag will be unnamed. */
-export function encode(name: string | null = "", tag: Tag | null) {
+/**
+ * Encode a nbt tag into a buffer.
+ *
+ * @param name Resulting tag will be unnamed if name is `null`.
+ * @param tag If tag is `null`, only a zero byte is returned.
+ */
+export function encode(name: string | null, tag: Tag | null): Buffer {
     let buffer = Buffer.alloc(1024), offset = 0
 
     // write tag type
@@ -60,7 +62,7 @@ export function encode(name: string | null = "", tag: Tag | null) {
     return buffer.slice(0, offset)
 }
 
-/** Encodes a string with it's length prefixed as unsigned 16 bit integer */
+/** Encode a string with it's length prefixed as unsigned 16 bit integer */
 function writeString(text: string, buffer: Buffer, offset: number) {
     const data = Buffer.from(text)
     buffer = accommodate(buffer, offset, data.length + 2)
@@ -69,7 +71,15 @@ function writeString(text: string, buffer: Buffer, offset: number) {
     return { buffer, offset }
 }
 
-export function decodeTagValue(type: number, buffer: Buffer, offset: number, useMaps: boolean) {
+/** Double the size of the buffer until the required amount is reached. */
+function accommodate(buffer: Buffer, offset: number, size: number) {
+    while (buffer.length < offset + size) {
+        buffer = Buffer.concat([buffer, Buffer.alloc(buffer.length)])
+    }
+    return buffer
+}
+
+function decodeTagValue(type: number, buffer: Buffer, offset: number, useMaps: boolean) {
     let value: Tag
     switch (type) {
         case TagType.Byte: value = new Byte(buffer.readInt8((offset += 1) - 1)); break
@@ -142,7 +152,7 @@ export function decodeTagValue(type: number, buffer: Buffer, offset: number, use
     return { value: <Tag>value, offset }
 }
 
-export function encodeTagValue(tag: Tag, buffer: Buffer, offset: number) {
+function encodeTagValue(tag: Tag, buffer: Buffer, offset: number) {
     // since most of the data types are smaller than 8 bytes, allocate this amount
     buffer = accommodate(buffer, offset, 8)
 

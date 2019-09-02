@@ -17,6 +17,6 @@ const buffer = encode("root", {
     },
 })
 
-const { name, value } = decode(buffer)
-console.log(value)
-console.log(encode(name, value).equals(buffer))
+console.log(decode(buffer))
+
+console.log(encode("a", null), encode("a", {}))

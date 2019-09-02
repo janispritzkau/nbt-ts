@@ -40,13 +40,9 @@ decode(Buffer.from("02000973686F7274546573747FFF", "hex"))
 encode(null, "a")
 // → <Buffer 08 00 01 61>
 
-// Decode unnamed tag with `hasName` parameter set to false
-decode(Buffer.from("08000161", "hex"), false)
+// Decode unnamed tag
+decode(Buffer.from("08000161", "hex"), { unnamed: true })
 // → { name: null, value: 'a', offset: 4 }
-
-// Decode at offset
-decode(Buffer.from("0000010000ff", "hex"), true, 2)
-// → { name: '', value: Byte { value: -1 }, offset: 6 }
 ```
 
 Note that the `encode` function accepts both unsigned numbers such as `255` and signed

@@ -60,7 +60,11 @@ export function stringify(tag: nbt.Tag, options: StringifyOptions = {}): string 
     return stringify(tag, 1)
 }
 
-export function parse(text: string) {
+export interface ParseOptions {
+    useMaps?: boolean
+}
+
+export function parse(text: string, options: ParseOptions = {}) {
     let index = 0, i = 0, char = ""
 
     const unexpectedEnd = () => new Error("Unexpected end")
@@ -144,16 +148,21 @@ export function parse(text: string) {
         }
     }
 
-    function readCompound() {
-        const object: nbt.TagObject = {}
+    function readCompound(): nbt.TagObject | nbt.TagMap {
+        const entries: [string, nbt.Tag][] = []
         let first = true
         while (true) {
             skipCommas(first, "}"), first = false
-            if (text[index] == "}") return (index++ , object)
+            if (text[index] == "}") {
+                index++
+                return options.useMaps
+                    ? new Map(entries)
+                    : entries.reduce<nbt.TagObject>((obj, [k, v]) => (obj[k] = v, obj), {})
+            }
             const key = readString()
             skipWhitespace()
             if (text[index++] != ":") throw unexpectedChar()
-            object[key] = parse() as any
+            entries.push([key, parse()])
         }
     }
 
@@ -194,12 +203,12 @@ export function parse(text: string) {
                 throw unexpectedChar(index - 1)
             }
             if (text[index] == "]") return (index++ , array)
-            array.push(parse() as any)
+            array.push(parse())
         }
         throw unexpectedEnd()
     }
 
-    function parse() {
+    function parse(): nbt.Tag {
         skipWhitespace()
 
         i = index, char = text[index]
