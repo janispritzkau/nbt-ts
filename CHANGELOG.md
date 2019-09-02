@@ -2,6 +2,10 @@
 
 All notable changes to this library will be documented here.
 
+## 1.2.5
+
+- Fixed bug with encoding and decoding `null` tags.
+
 ## 1.2.1
 
 - Fixed a few bugs with SNBT parsing and serialization.
