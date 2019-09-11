@@ -35,7 +35,7 @@ export class Float {
 }
 
 export interface TagArray extends Array<Tag> { }
-export interface TagObject { [key: string]: Tag }
+export interface TagObject { [key: string]: Tag | undefined | null }
 export interface TagMap extends Map<string, Tag> { }
 
 export type Tag = number | string | bigint | Byte | Short | Int | Float | Buffer

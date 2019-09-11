@@ -44,10 +44,11 @@ export function stringify(tag: nbt.Tag, options: StringifyOptions = {}): string 
                 return `[${list.join(sep)}]`
             }
         } else {
-            const pairs = (tag instanceof Map ? [...tag] : Object.entries(tag))
+            const pairs = (tag instanceof Map ? [...tag] : Object.entries(tag)
+                .filter(([_, v]) => v != null))
                 .map(([key, tag]) => {
                     if (!unquotedRegExp.test(key)) key = escapeString(key)
-                    return `${key}:${space}${stringify(tag, depth + 1)}`
+                    return `${key}:${space}${stringify(tag!, depth + 1)}`
                 })
             if (pretty && pairs.reduce((acc, x) => acc + x.length, 0) > breakLength) {
                 return `{\n${pairs.map(text => spaces.repeat(depth)

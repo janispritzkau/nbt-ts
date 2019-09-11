@@ -207,10 +207,11 @@ function encodeTagValue(tag: Tag, buffer: Buffer, offset: number) {
         }
         offset += tag.byteLength
     } else {
-        for (const [key, value] of tag instanceof Map ? tag : Object.entries(tag)) {
-            offset = buffer.writeUInt8(getTagType(value), offset);
+        for (const [key, value] of tag instanceof Map ? tag : Object.entries(tag)
+            .filter(([_, v]) => v != null)) {
+            offset = buffer.writeUInt8(getTagType(value!), offset);
             ({ buffer, offset } = writeString(key, buffer, offset));
-            ({ buffer, offset } = encodeTagValue(value, buffer, offset))
+            ({ buffer, offset } = encodeTagValue(value!, buffer, offset))
         }
         buffer = accommodate(buffer, offset, 1)
         offset = buffer.writeUInt8(0, offset)
