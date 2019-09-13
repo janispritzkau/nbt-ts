@@ -34,7 +34,7 @@ const buffer = encode("root", {
 })
 
 decode(Buffer.from("02000973686F7274546573747FFF", "hex"))
-// → { name: 'shortTest', value: Short { value: 32767 }, offset: 14 }
+// → { name: 'shortTest', value: Short { value: 32767 }, length: 14 }
 
 // Encode unnamed tag
 encode(null, "a")
@@ -42,7 +42,7 @@ encode(null, "a")
 
 // Decode unnamed tag
 decode(Buffer.from("08000161", "hex"), { unnamed: true })
-// → { name: null, value: 'a', offset: 4 }
+// → { name: null, value: 'a', length: 4 }
 ```
 
 Note that the `encode` function accepts both unsigned numbers such as `255` and signed
@@ -54,9 +54,9 @@ to convert a number to the unsigned representation, you might do something like 
 value & 0xff   // for bytes
 value & 0xffff // for shorts
 value >>> 0    // for ints
-value & 0xffffffffffffffffn // for longs
+BigInt.asUintN(64, value) // for longs
 // or
-BigInt.asUintN(64, value)
+value & 0xffffffffffffffffn
 ```
 
 ## SNBT
