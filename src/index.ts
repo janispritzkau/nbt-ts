@@ -212,8 +212,8 @@ function encodeTagValue(tag: Tag, buffer: Buffer, offset: number) {
             offset = buffer.writeUInt8(getTagType(value!), offset);
             ({ buffer, offset } = writeString(key, buffer, offset));
             ({ buffer, offset } = encodeTagValue(value!, buffer, offset))
+            buffer = accommodate(buffer, offset, 1)
         }
-        buffer = accommodate(buffer, offset, 1)
         offset = buffer.writeUInt8(0, offset)
     }
 
