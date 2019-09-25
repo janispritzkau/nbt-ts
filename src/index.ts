@@ -1,7 +1,5 @@
 import { Tag, TagType, Byte, Float, Int, Short, getTagType, TagObject, TagMap } from "./tag"
 
-if (!Buffer.prototype.readBigInt64BE) require("../buffer-bigint.shim")
-
 export * from "./tag"
 export * from "./snbt"
 
@@ -86,7 +84,10 @@ function decodeTagValue(type: number, buffer: Buffer, offset: number, useMaps: b
         case TagType.Byte: value = new Byte(buffer.readInt8((offset += 1) - 1)); break
         case TagType.Short: value = new Short(buffer.readInt16BE((offset += 2) - 2)); break
         case TagType.Int: value = new Int(buffer.readInt32BE((offset += 4) - 4)); break
-        case TagType.Long: value = buffer.readBigInt64BE((offset += 8) - 8); break
+        case TagType.Long: {
+            value = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength).getBigInt64(offset)
+            offset += 8
+        }; break
         case TagType.Float: value = new Float(buffer.readFloatBE((offset += 4) - 4)); break
         case TagType.Double: value = buffer.readDoubleBE((offset += 8) - 8); break
         case TagType.ByteArray: {
@@ -141,9 +142,10 @@ function decodeTagValue(type: number, buffer: Buffer, offset: number, useMaps: b
         case TagType.LongArray: {
             const length = buffer.readUInt32BE(offset)
             offset += 4
+            const dataview = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength)
             const array = value = new BigInt64Array(length)
             for (let i = 0; i < length; i++) {
-                array[i] = buffer.readBigInt64BE(offset + i * 8)
+                array[i] = dataview.getBigInt64(offset + i * 8)
             }
             offset += array.buffer.byteLength
             break
@@ -163,16 +165,15 @@ function encodeTagValue(tag: Tag, buffer: Buffer, offset: number) {
             : buffer.writeUInt8(tag.value, offset)
     } else if (tag instanceof Short) {
         offset = tag.value < 0
-            ? buffer.writeInt16BE(tag.value, offset)
-            : buffer.writeUInt16BE(tag.value, offset)
+            ? buffer.writeInt16BE(tag.value, offset, false)
+            : buffer.writeUInt16BE(tag.value, offset, false)
     } else if (tag instanceof Int) {
         offset = tag.value < 0
             ? buffer.writeInt32BE(tag.value, offset)
             : buffer.writeUInt32BE(tag.value, offset)
     } else if (typeof tag == "bigint") {
-        offset = tag < 0
-            ? buffer.writeBigInt64BE(tag, offset)
-            : buffer.writeBigUInt64BE(tag, offset)
+        new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength).setBigInt64(offset, tag)
+        offset += 8
     } else if (tag instanceof Float) {
         offset = buffer.writeFloatBE(tag.value, offset)
     } else if (typeof tag == "number") {
@@ -202,8 +203,9 @@ function encodeTagValue(tag: Tag, buffer: Buffer, offset: number) {
     } else if (tag instanceof BigInt64Array) {
         offset = buffer.writeUInt32BE(tag.length, offset)
         buffer = accommodate(buffer, offset, tag.byteLength)
+        const dataview = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength)
         for (let i = 0; i < tag.length; i++) {
-            buffer.writeBigInt64BE(tag[i], offset + i * 8)
+            dataview.setBigInt64(offset + i * 8, tag[i])
         }
         offset += tag.byteLength
     } else {
