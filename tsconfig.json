@@ -4,9 +4,9 @@
     "module": "commonjs",
     "strict": true,
     "esModuleInterop": true,
-    "sourceMap": true,
+    "declaration": true,
     "lib": ["esnext", "dom"],
-    "outDir": "dist"
+    "outDir": "lib"
   },
   "include": ["src"]
 }

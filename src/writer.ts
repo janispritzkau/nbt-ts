@@ -95,6 +95,9 @@ export class TagWriter {
       this.writeByte(type)
       this.writeInt(tag.length)
       for (const value of tag) {
+        if (getTagType(value) != type) {
+          throw new Error("All tags in a list must be of the same type")
+        }
         this.write(value)
       }
     } else if (tag instanceof Map) {

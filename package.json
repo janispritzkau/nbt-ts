@@ -10,8 +10,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "prepare": "npm run build && npm run test",
-    "test": "node tests/index.js"
+    "prepare": "rm -r lib && npm run build && npm run test",
+    "test": "ts-node tests/index.ts"
   },
   "keywords": [
     "nbt",
@@ -23,6 +23,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^14.14.35",
+    "ts-node": "^9.1.1",
     "typescript": "^4.2.3"
   }
 }

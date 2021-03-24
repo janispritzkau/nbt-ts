@@ -3,6 +3,7 @@ import { TagReader } from "./reader"
 import { getTagType, Tag } from "./tag"
 
 export * from "./tag"
+export * from "./snbt"
 
 export function encode(name: string, tag: Tag): Uint8Array {
   const writer = new TagWriter()
