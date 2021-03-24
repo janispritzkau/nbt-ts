@@ -2,6 +2,11 @@
 
 All notable changes to this library will be documented here.
 
+## 2.0.0
+
+- Major rewrite with breaking changes to the API.
+- Removed dependency on Node.js's buffer.
+
 ## 1.2.5
 
 - Fixed bug with encoding and decoding `null` tags.
