@@ -173,9 +173,9 @@ export function parse(text: string, options: ParseOptions = {}) {
             skipCommas(array.length == 0, "]")
             if (text[index] == "]") {
                 index++
-                if (type == "B") return Buffer.from(array.map(v => +v))
-                else if (type == "I") return Int32Array.from(array.map(v => +v))
-                else if (type == "L") return BigInt64Array.from(array.map(v => BigInt(v)))
+                if (type == "B") return new Int8Array(array.map(v => +v))
+                else if (type == "I") return new Int32Array(array.map(v => +v))
+                else if (type == "L") return new BigInt64Array(array.map(v => BigInt(v)))
             }
             i = index
             if (text[index] == "-") index++
