@@ -14,7 +14,7 @@ Node 10.4 or higher is required for BigInts, which are used to represent 64 bit 
 ## Usage
 
 ```js
-const { encode, decode, Byte, Short, Int, Float } = require("nbt-ts")
+const { encode, encodeUnnamed, decode, decodeUnnamed, Byte, Short, Int, Float } = require("nbt-ts")
 
 const buffer = encode("root", {
     byte: new Byte(-1),
@@ -26,36 +26,33 @@ const buffer = encode("root", {
     string: "Hello world",
     list: ["item 1", "item 2"],
     compound: {
-        byteArray: Buffer.from([0x80, 0x40, 0x20]),
-        // Int8Array does work here too
+        byteArray: new Int8Array([0x80, 0x40, 0x20]),
         intArray: new Int32Array([1, 2, 3, 4]),
         longArray: new BigInt64Array([1n, 2n, 3n, 4n])
     },
 })
 
 decode(Buffer.from("02000973686F7274546573747FFF", "hex"))
-// → { name: 'shortTest', value: Short { value: 32767 }, length: 14 }
+// { name: 'shortTest', tag: Short { value: 32767 }, length: 14 }
 
-// Encode unnamed tag
-encode(null, "a")
-// → <Buffer 08 00 01 61>
+encodeUnnamed("a")
+// Uint8Array(4) [ 8, 0, 1, 97 ]
 
-// Decode unnamed tag
-decode(Buffer.from("08000161", "hex"), { unnamed: true })
-// → { name: null, value: 'a', length: 4 }
+decodeUnnamed(Buffer.from("08000161", "hex"))
+// { tag: 'a', length: 4 }
 ```
 
-Note that the `encode` function accepts both unsigned numbers such as `255` and signed
-numbers like `-1` which are essentially the same in the case of a 8 bit integer.
-However when decoded, they will always have the signed representation. If you want
-to convert a number to the unsigned representation, you might do something like this:
+Note that the `encode` function accepts both unsigned numbers like `255` and signed numbers like `-1`, which are essentially the same in the case of an 8-bit integer. However, when decoded, they always have the signed representation. If you want to convert a number to the unsigned representation, you could do something like this:
 
 ```js
-value & 0xff   // for bytes
-value & 0xffff // for shorts
-value >>> 0    // for ints
-BigInt.asUintN(64, value) // for longs
-// or
+// convert byte to unsigned byte
+value & 0xff
+// convert short to unsigned short
+value & 0xffff
+// convert int to unsigned int
+value >>> 0
+// convert long to unsigned long
+BigInt.asUintN(64, value)
 value & 0xffffffffffffffffn
 ```
 
