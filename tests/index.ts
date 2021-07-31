@@ -20,6 +20,8 @@ assert.throws(() => decodeUnnamed(Buffer.from("00000b00000001", "hex").slice(2))
 assert.deepStrictEqual(tag, parse(stringify(tag)))
 assert.deepStrictEqual(tag, parse(stringify(tag, { pretty: true })))
 
+assert.strictEqual(stringify('\\"'), "'\\\\\"'")
+
 assert.doesNotThrow(() => {
   parse("{ a: 1f, b: 2.0, }")
   parse("[1, 2,]")
@@ -34,6 +36,7 @@ assert.throws(() => parse(`{a: `))
 assert.throws(() => parse(`{,a: 1}`))
 assert.throws(() => parse(`[1,,]`))
 assert.throws(() => parse(`[,""]`))
+assert.throws(() => parse(`"`))
 
 assert.strictEqual(typeof parse("1bb"), "string")
 assert.strictEqual(typeof parse("1.0.0"), "string")
