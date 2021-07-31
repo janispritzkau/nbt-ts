@@ -165,8 +165,8 @@ function encodeTagValue(tag: Tag, buffer: Buffer, offset: number) {
             : buffer.writeUInt8(tag.value, offset)
     } else if (tag instanceof Short) {
         offset = tag.value < 0
-            ? buffer.writeInt16BE(tag.value, offset, false)
-            : buffer.writeUInt16BE(tag.value, offset, false)
+            ? buffer.writeInt16BE(tag.value, offset)
+            : buffer.writeUInt16BE(tag.value, offset)
     } else if (tag instanceof Int) {
         offset = tag.value < 0
             ? buffer.writeInt32BE(tag.value, offset)
