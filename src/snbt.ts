@@ -14,10 +14,18 @@ export function stringify(tag: nbt.Tag, options: StringifyOptions = {}): string 
     const spaces = " ".repeat(4)
 
     function escapeString(text: string) {
-        const q = quoteChar != null
-            ? quoteChar
-            : text.split('"', 4).length > text.split("'", 4).length ? "'" : '"'
-        return `${q}${text.replace(q, `\\${q}`)}${q}`
+        let q = quoteChar ?? '"'
+        if (quoteChar == null) {
+            for (let i = 0; i < text.length && i < 8; i++) {
+                switch (text[i]) {
+                    case "'": q = '"'; break
+                    case '"': q = "'"; break
+                    default: continue
+                }
+                break
+            }
+        }
+        return `${q}${text.replace(RegExp(`[${q}\\\\]`, "g"), x => `\\${x}`)}${q}`
     }
 
     function stringify(tag: nbt.Tag, depth: number): string {
