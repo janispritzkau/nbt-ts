@@ -4,7 +4,8 @@
         "module": "commonjs",
         "strict": true,
         "lib": ["esnext"],
-        "outDir": "lib",
+        "outDir": "lib/cjs",
+        "moduleResolution": "node",
         "declaration": true
     },
     "include": [
