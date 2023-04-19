@@ -31,6 +31,7 @@ export function stringify(tag: nbt.Tag, options: StringifyOptions = {}): string 
     function stringify(tag: nbt.Tag, depth: number): string {
         const space = pretty ? " " : "", sep = pretty ? ", " : ","
         if (tag instanceof nbt.Byte) return `${tag.value}b`
+        else if (typeof tag == "boolean") return `${tag ? 1 : 0}b`
         else if (tag instanceof nbt.Short) return `${tag.value}s`
         else if (tag instanceof nbt.Int) return `${tag.value | 0}`
         else if (typeof tag == "bigint") return `${tag}l`
@@ -229,7 +230,11 @@ export function parse(text: string, options: ParseOptions = {}) {
         if (value != null && (index == text.length || !unquotedRegExp.test(text[index]))) {
             return value
         }
-        return text.slice(i, index) + readUnquotedString()
+        const unquotedString = text.slice(i, index) + readUnquotedString()
+        if (unquotedString.toLowerCase() == "true" || unquotedString.toLowerCase() == "false") {
+            return new nbt.Byte(unquotedString == "true" ? 1 : 0)
+        }
+        return unquotedString
     }
 
     const value = parse()

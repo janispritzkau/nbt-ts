@@ -38,11 +38,12 @@ export interface TagArray extends Array<Tag> { }
 export interface TagObject { [key: string]: Tag | undefined | null }
 export interface TagMap extends Map<string, Tag> { }
 
-export type Tag = number | string | bigint | Byte | Short | Int | Float | Buffer
+export type Tag = number | string | bigint | boolean | Byte | Short | Int | Float | Buffer
     | Int8Array | Int32Array | BigInt64Array | TagArray | TagObject | TagMap
 
 export function getTagType(tag: Tag): TagType {
     if (tag instanceof Byte) return TagType.Byte
+    if (typeof tag == "boolean") return TagType.Byte
     if (tag instanceof Short) return TagType.Short
     if (tag instanceof Int) return TagType.Int
     if (typeof tag == "bigint") return TagType.Long
