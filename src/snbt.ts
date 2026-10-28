@@ -1,6 +1,9 @@
 import * as nbt from "."
 
 const unquotedRegExp = /^[0-9A-Za-z.+_-]+$/
+// Matches Java's Character.isWhitespace: \t-\r, \u001C-\u001F and Unicode
+// space/line/paragraph separators, excluding non-breaking spaces
+const whitespaceRegExp = /[\t-\r\u001C-\u001F \u1680\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000]/
 
 export interface StringifyOptions {
     pretty?: boolean
@@ -84,7 +87,7 @@ export function parse(text: string, options: ParseOptions = {}) {
 
     function skipWhitespace() {
         while (index < text.length) {
-            if (text[index] != " " && text[index] != "\n") return
+            if (!whitespaceRegExp.test(text[index])) return
             index += 1
         }
     }
