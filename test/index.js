@@ -32,6 +32,20 @@ assert.doesNotThrow(() => {
     nbt.parse(`{'a': 1, "b": 'c'}`)
 }, "single quotes")
 
+// Whitespace (Java's Character.isWhitespace)
+
+const expected = { a: new nbt.Int(1), b: [new nbt.Int(2), new nbt.Int(3)] }
+
+assert.deepStrictEqual(nbt.parse("{\ta:\t1,\tb:\t[2,\t3]\t}"), expected, "tabs")
+assert.deepStrictEqual(nbt.parse("{\r\n  a: 1,\r\n  b: [\r\n    2,\r\n    3\r\n  ]\r\n}"), expected, "CRLF")
+assert.deepStrictEqual(nbt.parse("{ \t\r\n\u000B\fa\u001C:\u001D1\u001E,\u001Fb\u2003:\u3000[2\u2028,\u20293\u205F]\u1680}"), expected, "mixed whitespace")
+assert.deepStrictEqual(nbt.parse("\t\r\n[I;\t1,\r\n2\t]"), Int32Array.from([1, 2]), "whitespace in typed arrays")
+
+// Non-breaking spaces are not whitespace in Java
+for (const nbsp of ["\u00A0", "\u2007", "\u202F"]) {
+    assert.throws(() => nbt.parse(`{${nbsp}a: 1}`), `non-breaking space U+${nbsp.charCodeAt(0).toString(16)}`)
+}
+
 assert.throws(() => nbt.parse(`{a: `))
 assert.throws(() => nbt.parse(`{,a: 1}`))
 assert.throws(() => nbt.parse(`[1,,]`))

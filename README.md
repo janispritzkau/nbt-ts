@@ -1,6 +1,8 @@
 # nbt-ts
 
 > **⚠️ This library has not been maintained for some time. Please use it with caution or switch to another implementation!**
+>
+> A newer and more robust SNBT parser is available in [deno-minecraft](https://github.com/janispritzkau/deno-minecraft/blob/main/nbt/snbt.ts).
 
 [![npm](https://img.shields.io/npm/v/nbt-ts.svg)](https://www.npmjs.com/package/nbt-ts)
 [![downloads](https://img.shields.io/npm/dm/nbt-ts.svg)](https://www.npmjs.com/package/nbt-ts)
